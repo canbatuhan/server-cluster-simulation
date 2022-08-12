@@ -71,7 +71,7 @@ namespace servercluster {
 
     #pragma endregion
 
-    // Function Implementations
+    /* METHOD IMPLEMENTATIONS */
     #pragma region
 
     void Request::init(int requestID, string requestMessage) {
@@ -148,6 +148,50 @@ namespace servercluster {
     void Node::logProcess(Request* request) {
         this->logFile << "[NODE#" << this->name << "] ";
         this->logFile << "Request Processed - \"" << request->message << "\"" << endl;
+    }
+
+    ServerCluster::ServerCluster() {
+        this->size = DEFAULT_SIZE;
+        for (int n=0; n<this->size; n++) {
+            if (n==0) {
+                // HeadNode is TailNode
+                this->headNode = new Node(n, "InitialNode", n, n+1, DEFAULT_LOG_PATH);
+                this->tailNode = this->headNode;
+            } else {
+                // Add next to TailNode and become TailNode
+                Node* newNode = new Node(n, "Node", n, n+1, DEFAULT_LOG_PATH);
+                this->tailNode->setAsNeighbour(newNode, NEXT);
+                newNode->setAsNeighbour(this->tailNode, PREVIOUS);
+                this->tailNode = newNode;
+            }
+            
+            // NextNode of TailNode is HeadNode
+            // PreviousNode of HeadNode is TailNode
+            this->tailNode->setAsNeighbour(this->headNode, NEXT);
+            this->headNode->setAsNeighbour(this->tailNode, PREVIOUS);
+        }
+    }
+
+    ServerCluster::ServerCluster(int size) {
+        this->size = size;
+        for (int n=0; n<this->size; n++) {
+            if (n==0) {
+                // HeadNode is TailNode
+                this->headNode = new Node(n, "InitialNode", n, n+1, DEFAULT_LOG_PATH);
+                this->tailNode = this->headNode;
+            } else {
+                // Add next to TailNode and become TailNode
+                Node* newNode = new Node(n, "Node", n, n+1, DEFAULT_LOG_PATH);
+                this->tailNode->setAsNeighbour(newNode, NEXT);
+                newNode->setAsNeighbour(this->tailNode, PREVIOUS);
+                this->tailNode = newNode;
+            }
+            
+            // NextNode of TailNode is HeadNode
+            // PreviousNode of HeadNode is TailNode
+            this->tailNode->setAsNeighbour(this->headNode, NEXT);
+            this->headNode->setAsNeighbour(this->tailNode, PREVIOUS);
+        }
     }
 
     #pragma endregion
