@@ -42,6 +42,7 @@ namespace servercluster {
             ~Node();
 
             // Getters & Setters
+            int getID();
             string getName();
             Node* getNeighbour(NeighbourType);
             void setNeighbour(Node*, NeighbourType);
@@ -108,7 +109,7 @@ namespace servercluster {
         this->name = name;
         this->lowerLimit = lowerLimit;
         this->upperLimit = upperLimit;
-        this->logFile.open(logFilePath, fstream::out);
+        this->logFile.open(logFilePath, fstream::in | fstream::out);
         this->nextNode = nextNode;
         this->previousNode = previousNode;
     }
@@ -117,6 +118,10 @@ namespace servercluster {
         this->logFile.close();
         this->nextNode = nullptr;
         this->previousNode = nullptr;
+    }
+
+    int Node::getID() {
+        return this->id;
     }
 
     string Node::getName() {
@@ -144,20 +149,22 @@ namespace servercluster {
             this->sendToNeighbour(request);
         } else {
             this->processRequest(request);
-            this->processRequest(request);
+            this->logProcess(request);
         }
     }
 
     void Node::sendToNeighbour(Request* request) {
         if (request->id < lowerLimit) {
+            cout << "[REDIRECTED]\t-> Node#" << this->previousNode->id << endl;
             this->previousNode->receiveRequest(request);
         } else {
-            this->previousNode->receiveRequest(request);
+            cout << "[REDIRECTED]\t-> Node#" << this->nextNode->id << endl;
+            this->nextNode->receiveRequest(request);
         }     
     }
 
     void Node::processRequest(Request* request) {
-        cout << "Request Type: " << request->id;
+        cout << "[PROCESSED]";
         cout << "\tRequest Message: " << request->message << endl;
     }
 
@@ -254,6 +261,18 @@ namespace servercluster {
                 traverse->getNeighbour(PREVIOUS), PREVIOUS);
             delete traverse;
         }
+    }
+
+    void ServerCluster::handleRequest(Request* request) {
+        cout << "[REQUESTED]";
+        cout << "\t->" << "Node#" << this->headNode->getID() << endl;
+        this->headNode->receiveRequest(request);
+    }
+
+    void ServerCluster::simulate() {
+        Request* newRequest = new Request;
+        newRequest->init(3, "Hello World!");
+        this->handleRequest(newRequest);
     }
 
     #pragma endregion
