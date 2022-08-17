@@ -41,8 +41,12 @@ namespace servercluster {
             Node(int, string, int, int, string, Node*, Node*);
             ~Node();
 
+            // Getters & Setters
+            string getName();
+            Node* getNeighbour(NeighbourType);
+            void setNeighbour(Node*, NeighbourType);
+
             // Basic Methods
-            void setAsNeighbour(Node*, NeighbourType);
             void receiveRequest(Request*); // Receives a request from server or neighbour
     };
 
@@ -115,7 +119,19 @@ namespace servercluster {
         this->previousNode = nullptr;
     }
 
-    void Node::setAsNeighbour(Node* node, NeighbourType neighbourType) {
+    string Node::getName() {
+        return this->name;
+    }
+
+    Node* Node::getNeighbour(NeighbourType neighbourType) {
+        if (neighbourType == NEXT) {
+            return this->nextNode;
+        } else {
+            return this->previousNode;
+        }
+    }
+
+    void Node::setNeighbour(Node* node, NeighbourType neighbourType) {
         if (neighbourType == NEXT) {
             this->nextNode = node;
         } else {
@@ -160,15 +176,15 @@ namespace servercluster {
             } else {
                 // Add next to TailNode and become TailNode
                 Node* newNode = new Node(n, "Node", n, n+1, DEFAULT_LOG_PATH);
-                this->tailNode->setAsNeighbour(newNode, NEXT);
-                newNode->setAsNeighbour(this->tailNode, PREVIOUS);
+                this->tailNode->setNeighbour(newNode, NEXT);
+                newNode->setNeighbour(this->tailNode, PREVIOUS);
                 this->tailNode = newNode;
             }
             
             // NextNode of TailNode is HeadNode
             // PreviousNode of HeadNode is TailNode
-            this->tailNode->setAsNeighbour(this->headNode, NEXT);
-            this->headNode->setAsNeighbour(this->tailNode, PREVIOUS);
+            this->tailNode->setNeighbour(this->headNode, NEXT);
+            this->headNode->setNeighbour(this->tailNode, PREVIOUS);
         }
     }
 
@@ -182,15 +198,61 @@ namespace servercluster {
             } else {
                 // Add next to TailNode and become TailNode
                 Node* newNode = new Node(n, "Node", n, n+1, DEFAULT_LOG_PATH);
-                this->tailNode->setAsNeighbour(newNode, NEXT);
-                newNode->setAsNeighbour(this->tailNode, PREVIOUS);
+                this->tailNode->setNeighbour(newNode, NEXT);
+                newNode->setNeighbour(this->tailNode, PREVIOUS);
                 this->tailNode = newNode;
             }
             
             // NextNode of TailNode is HeadNode
             // PreviousNode of HeadNode is TailNode
-            this->tailNode->setAsNeighbour(this->headNode, NEXT);
-            this->headNode->setAsNeighbour(this->tailNode, PREVIOUS);
+            this->tailNode->setNeighbour(this->headNode, NEXT);
+            this->headNode->setNeighbour(this->tailNode, PREVIOUS);
+        }
+    }
+
+    ServerCluster::~ServerCluster() {
+        Node* nextNode;
+        Node* traverse = this->headNode;
+        while (traverse != nullptr) {
+            nextNode = traverse->getNeighbour(NEXT);
+            delete traverse;
+            traverse = nextNode;
+        }
+    }
+
+    void ServerCluster::addServer(Node* newNode) {
+        // Add next to TailNode and become TailNode
+        this->tailNode->setNeighbour(newNode, NEXT);
+        newNode->setNeighbour(this->tailNode, PREVIOUS);
+        this->tailNode = newNode;
+
+        // NextNode of TailNode is HeadNode
+        // PreviousNode of HeadNode is TailNode
+        this->tailNode->setNeighbour(this->headNode, NEXT);
+        this->headNode->setNeighbour(this->tailNode, PREVIOUS);
+        this->size++;
+    }
+
+    void ServerCluster::removeServer(string nodeName) {
+        Node* traverse = this->headNode;
+        while (traverse != this->tailNode) {
+            if (traverse->getName() == nodeName) {
+                traverse->getNeighbour(PREVIOUS)->setNeighbour(
+                    traverse->getNeighbour(NEXT), NEXT);
+                traverse->getNeighbour(NEXT)->setNeighbour(
+                    traverse->getNeighbour(PREVIOUS), PREVIOUS);
+                delete traverse;
+                break;
+            }
+        }
+
+        // Query for TailNode
+        if (traverse->getName() == nodeName) {
+            traverse->getNeighbour(PREVIOUS)->setNeighbour(
+                traverse->getNeighbour(NEXT), NEXT);
+            traverse->getNeighbour(NEXT)->setNeighbour(
+                traverse->getNeighbour(PREVIOUS), PREVIOUS);
+            delete traverse;
         }
     }
 
