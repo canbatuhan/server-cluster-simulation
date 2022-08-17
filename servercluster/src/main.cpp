@@ -3,6 +3,6 @@
 using namespace servercluster;
 
 int main() {
-    servercluster::ServerCluster cluster;
+    servercluster::ServerCluster cluster = ServerCluster(10);
     cluster.simulate();
 }

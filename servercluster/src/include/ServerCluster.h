@@ -270,9 +270,13 @@ namespace servercluster {
     }
 
     void ServerCluster::simulate() {
+        srand(0);
         Request* newRequest = new Request;
-        newRequest->init(3, "Hello World!");
-        this->handleRequest(newRequest);
+        for (int i=0; i<this->size; i++) {
+            newRequest->init(rand()%this->size, "Hello World!");
+            this->handleRequest(newRequest);
+        }
+        delete newRequest;
     }
 
     #pragma endregion
