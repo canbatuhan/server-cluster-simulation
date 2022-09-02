@@ -27,7 +27,7 @@ namespace servercluster {
         private:
             int id; string name;
             int lowerLimit, upperLimit; // Process range of the node
-            fstream logFile;
+            string logFilePath; fstream logFile;
             Node* nextNode; Node* previousNode; // Neighbour nodes
 
             void sendToNeighbour(Request*); // Send request to a neighbour
@@ -89,7 +89,7 @@ namespace servercluster {
         this->name = "";
         this->lowerLimit = INT16_MIN;
         this->upperLimit = INT16_MAX;
-        this->logFile.open(DEFAULT_LOG_PATH, fstream::out);
+        this->logFilePath = DEFAULT_LOG_PATH;
         this->nextNode = nullptr;
         this->previousNode = nullptr;
     }
@@ -99,7 +99,7 @@ namespace servercluster {
         this->name = name;
         this->lowerLimit = lowerLimit;
         this->upperLimit = upperLimit;
-        this->logFile.open(logFilePath, fstream::out);
+        this->logFilePath = logFilePath;
         this->nextNode = nullptr;
         this->previousNode = nullptr;
     }
@@ -109,7 +109,7 @@ namespace servercluster {
         this->name = name;
         this->lowerLimit = lowerLimit;
         this->upperLimit = upperLimit;
-        this->logFile.open(logFilePath, fstream::in | fstream::out);
+        this->logFilePath = logFilePath;
         this->nextNode = nextNode;
         this->previousNode = previousNode;
     }
@@ -155,10 +155,10 @@ namespace servercluster {
 
     void Node::sendToNeighbour(Request* request) {
         if (request->id < lowerLimit) {
-            cout << "[REDIRECTED]\t-> Node#" << this->previousNode->id << endl;
+            cout << "[REDIRECTED]\tNode#" << this->id << " -> Node#" << this->previousNode->id << endl;
             this->previousNode->receiveRequest(request);
         } else {
-            cout << "[REDIRECTED]\t-> Node#" << this->nextNode->id << endl;
+            cout << "[REDIRECTED]\tNode#" << this->id << " -> Node#" << this->nextNode->id << endl;
             this->nextNode->receiveRequest(request);
         }     
     }
@@ -169,8 +169,10 @@ namespace servercluster {
     }
 
     void Node::logProcess(Request* request) {
-        this->logFile << "[NODE#" << this->name << "] ";
+        this->logFile.open(this->logFilePath);
+        this->logFile << "[NODE#" << this->id << "] ";
         this->logFile << "Request Processed - \"" << request->message << "\"" << endl;
+        this->logFile.close();
     }
 
     ServerCluster::ServerCluster() {
@@ -265,7 +267,7 @@ namespace servercluster {
 
     void ServerCluster::handleRequest(Request* request) {
         cout << "[REQUESTED]";
-        cout << "\t->" << "Node#" << this->headNode->getID() << endl;
+        cout << "\t-> " << "Node#" << this->headNode->getID() << endl;
         this->headNode->receiveRequest(request);
     }
 
